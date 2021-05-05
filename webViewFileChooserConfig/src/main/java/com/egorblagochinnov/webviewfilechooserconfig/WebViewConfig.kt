@@ -1,4 +1,4 @@
-package com.egorblagochinnov.webview
+package com.egorblagochinnov.webviewfilechooserconfig
 
 import android.app.Activity
 import android.content.Intent
@@ -14,10 +14,17 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import java.lang.ref.WeakReference
 
+/**
+ * Конфигуратор WebView для работы с сайтом
+ * **/
 class WebViewConfig: LifecycleObserver {
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private var webChromeClient: FileChooserWebChromeClient? = null
 
+    /**
+     * Включает DOM storage и JavaScript в WebView,
+     * а так же настроит WebChromeClient для перехвата событий открытия диалогового окна выбора файлов
+     * **/
     fun configure(activity: ComponentActivity, webView: WebView) {
         clear()
         activity.lifecycle.addObserver(this)
@@ -26,6 +33,10 @@ class WebViewConfig: LifecycleObserver {
         webView.webChromeClient = webChromeClient
     }
 
+    /**
+     * Включает DOM storage и JavaScript в WebView,
+     * а так же настроит WebChromeClient для перехвата событий открытия диалогового окна выбора файлов
+     * **/
     fun configure(fragment: Fragment, webView: WebView) {
         clear()
         fragment.lifecycle.addObserver(this)
@@ -34,19 +45,14 @@ class WebViewConfig: LifecycleObserver {
         webView.webChromeClient = webChromeClient
     }
 
+    /**
+     * Включает DOM storage и JavaScript в WebView
+     * **/
     fun setupWebViewSettings(webView: WebView) {
         with(webView.settings) {
             domStorageEnabled = true
             javaScriptEnabled = true
         }
-    }
-
-    fun getWebViewChromeClient(fragment: Fragment): FileChooserWebChromeClient {
-        return FileChooserWebChromeClient(fragment)
-    }
-
-    fun getWebViewChromeClient(activity: Activity): FileChooserWebChromeClient {
-        return FileChooserWebChromeClient(activity)
     }
 
     fun handleFileChooser(
@@ -87,7 +93,23 @@ class WebViewConfig: LifecycleObserver {
         return true
     }
 
-    fun createIntent(
+    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            val dataString = data?.dataString
+            val results = Uri.parse(dataString)
+            filePathCallback?.onReceiveValue(arrayOf(results))
+        }
+    }
+
+    private fun getWebViewChromeClient(fragment: Fragment): FileChooserWebChromeClient {
+        return FileChooserWebChromeClient(fragment)
+    }
+
+    private fun getWebViewChromeClient(activity: Activity): FileChooserWebChromeClient {
+        return FileChooserWebChromeClient(activity)
+    }
+
+    private fun createIntent(
         webView: WebView?,
         filePathCallback: ValueCallback<Array<Uri>>?,
         fileChooserParams: WebChromeClient.FileChooserParams?
@@ -127,15 +149,7 @@ class WebViewConfig: LifecycleObserver {
         }
     }
 
-    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
-            val dataString = data?.dataString
-            val results = Uri.parse(dataString)
-            filePathCallback?.onReceiveValue(arrayOf(results))
-        }
-    }
-
-    inner class FileChooserWebChromeClient private constructor(): WebChromeClient() {
+    private inner class FileChooserWebChromeClient private constructor(): WebChromeClient() {
         constructor(activity: Activity): this() {
             activityRef = WeakReference(activity)
         }

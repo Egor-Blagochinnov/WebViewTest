@@ -10,12 +10,16 @@ import android.webkit.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.egorblagochinnov.webview.R
-import com.egorblagochinnov.webview.WebViewConfig
 import com.egorblagochinnov.webview.databinding.MainFragmentBinding
+import com.egorblagochinnov.webviewfilechooserconfig.WebViewConfig
 
 class MainFragment : Fragment() {
     private lateinit var binding: MainFragmentBinding
     private lateinit var viewModel: MainViewModel
+
+    private val webView: WebView by lazy {
+        requireView().findViewById<WebView>(R.id.web_view)
+    }
 
     private val webViewConfigurator = WebViewConfig()
 
@@ -36,31 +40,37 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            //webViewConfigurator.configure(this, binding.webView)
+        val webView = requireView().findViewById<WebView>(R.id.web_view)
 
-            webViewConfigurator.setupWebViewSettings(binding.webView)
-            binding.webView.webChromeClient = object : WebChromeClient() {
-                override fun onShowFileChooser(
-                    webView: WebView?,
-                    filePathCallback: ValueCallback<Array<Uri>>?,
-                    fileChooserParams: FileChooserParams?
-                ): Boolean {
-                    return webViewConfigurator.handleFileChooser(
-                        this@MainFragment,
-                        webView,
-                        filePathCallback,
-                        fileChooserParams
-                    )
-                }
+        webViewConfigurator.configure(this, binding.webView)
+
+
+        webViewConfigurator.setupWebViewSettings(binding.webView)
+        binding.webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                return webViewConfigurator.handleFileChooser(
+                    this@MainFragment,
+                    webView,
+                    filePathCallback,
+                    fileChooserParams
+                )
             }
         }
+
 
         binding.webView.loadUrl("https://sandbox.wert.io/")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         webViewConfigurator.onActivityResult(requestCode, resultCode, data)
+    }
+
+    fun loadPage() {
+        binding.webView.loadUrl("https://sandbox.wert.io/")
     }
 
     companion object {
